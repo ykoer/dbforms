@@ -1,0 +1,63 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>DB-Forms</title>
+
+
+    
+    <link rel="stylesheet" type="text/css" media="screen" href="js/jquery/theme/cupertino/jquery-ui-1.7.3.custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
+    
+    <script src="js/jquery/jquery-1.7.2.min.js" type="text/javascript"></script>
+    <script src="js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
+    
+    <script src="js/i18n/grid.locale-en.js" type="text/javascript"></script>
+    <script src="js/jqgrid/jquery.jqGrid.src.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+    
+          
+        $(function() {
+        	
+        	
+         	$("#grid1").jqGrid({ 
+        		url:'rest/config/dbs', 
+        		datatype: "json",
+        		jsonReader: {
+                    repeatitems: false,
+                    id: "id",
+                },
+                height: 'auto',
+        		colNames:['ID','ATTR1','GENRE','PRODUCTION','RELEASEDATE'],
+        		colModel:[
+        		          {index:'id',sorttype:'int',name:'id'},
+        		          {index:'attr1',sorttype:'string',name:'attr1'},
+        		          {index:'genre',sorttype:'string',name:'genre'},
+        		          {index:'production',sorttype:'string',name:'production'},
+        		          {index:'releasedate',sorttype:'date',name:'releasedate'}
+        		],
+        		rowNum:10, 
+        		rowList:[10,20,30], 
+        		pager: '#pgrid1', 
+        		sortname: 'id', 
+        		viewrecords: true, 
+        		sortorder: "desc", 
+        		caption:"JSON Example"        	
+            });   
+        });
+        
+        
+       
+        
+    </script>
+</head>
+<body>
+
+    <table id="grid1"></table>
+	<div id="pgrid1"></div>
+
+</body>
+</html>
