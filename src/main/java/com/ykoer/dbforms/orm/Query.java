@@ -27,44 +27,44 @@ import org.hibernate.validator.constraints.NotEmpty;
 @XmlRootElement
 @NamedQueries ({
     @NamedQuery(name="Query.findAll", query="select q from Query q"),
-    @NamedQuery(name="Query.findByDatabaseId", query="select q from Query q where :databaseId member of q.schemas.database"),
-    @NamedQuery(name="Query.findBySchemaId", query="select q from Query q where :schemaId member of q.schemas"),
+    //@NamedQuery(name="Query.findByDatabaseId", query="select q from Query q where :databaseId member of q.schemas.database"),
+    //@NamedQuery(name="Query.findBySchemaId", query="select q from Query q where :schemaId member of q.schemas"),
     @NamedQuery(name="Query.find", query="select q from Query q where q.id = :id "),
     @NamedQuery(name="Query.delete", query="delete from Query q where q.id = :id")
 })
 public class Query extends AbstractGrid {
-    
+
     @Id
     @GeneratedValue
     private Long   id;
-    
+
     @ManyToOne (fetch=FetchType.EAGER)
-    @JoinColumn(name="group_id",nullable=false)    
+    @JoinColumn(name="group_id",nullable=false)
     private Group group;
-    
+
     //private String groupName;
-    
+
     @NotNull
     @NotEmpty
     private String name;
-    
+
     @NotNull
     @NotEmpty
     @Column(name="sql_query")
     private String sql;
-    
+
     @ManyToMany(mappedBy = "queries", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Schema> schemas;
-    
+
     @OneToMany(mappedBy="query", fetch = FetchType.EAGER)
     private Set<Clause> clauses;
-    
 
-    
+
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -72,7 +72,7 @@ public class Query extends AbstractGrid {
     public Group getGroup() {
         return group;
     }
-    
+
     public void setGroup(Group group) {
         this.group = group;
     }
@@ -80,7 +80,7 @@ public class Query extends AbstractGrid {
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -88,7 +88,7 @@ public class Query extends AbstractGrid {
     public String getSql() {
         return sql;
     }
-    
+
     public void setSql(String sql) {
         this.sql = sql;
     }
@@ -97,7 +97,7 @@ public class Query extends AbstractGrid {
     public Set<Schema> getSchemas() {
         return schemas;
     }
-    
+
     public void setSchemas(Set<Schema> schemas) {
         this.schemas = schemas;
     }
