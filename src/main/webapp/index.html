@@ -19,434 +19,431 @@
 
     <script type="text/javascript">
 
-       var adminBaseUrl = "rest/config/";
-       var currentDatabaseId = 0;
+        var adminBaseUrl = "rest/config/";
+        var currentDatabaseId = 0;
 
-       var groups;
+        var groups;
 
-       var dbList;
+        var dbList;
 
+        var jsonOptions = {
+            type :"POST",
+            contentType :"application/json; charset=utf-8",
+            dataType :"json"
+        };
 
+        var saveSelection = function () {
+            var $grid = $(this);
+            $.data( this, 'selection.lastSelArrRow', $grid.jqGrid('getGridParam', 'selarrrow').length == 0 ? $.makeArray( $grid.jqGrid('getGridParam', 'selrow') ) : $grid.jqGrid('getGridParam', 'selarrrow') );
+            $.data( this, 'selection.lastScrollLeft', this.grid.bDiv.scrollLeft );
+            $.data( this, 'selection.sortName', $grid.jqGrid('getGridParam', 'sortname'));
+            $.data( this, 'selection.sortOrder', $grid.jqGrid('getGridParam', 'sortorder'));
+        };
 
-       var jsonOptions = {
-           type :"POST",
-           contentType :"application/json; charset=utf-8",
-           dataType :"json"
-       };
+        var restoreSelection = function () {
+            var i, l,
+                p = this.p,
+                $grid = $(this);
 
-       var saveSelection = function () {
-    	    var $grid = $(this);
-    	    $.data( this, 'selection.lastSelArrRow', $grid.jqGrid('getGridParam', 'selarrrow').length == 0 ? $.makeArray( $grid.jqGrid('getGridParam', 'selrow') ) : $grid.jqGrid('getGridParam', 'selarrrow') );
-    	    $.data( this, 'selection.lastScrollLeft', this.grid.bDiv.scrollLeft );
-    	    $.data( this, 'selection.sortName', $grid.jqGrid('getGridParam', 'sortname'));
-    	    $.data( this, 'selection.sortOrder', $grid.jqGrid('getGridParam', 'sortorder'));
-    	};
+            p.selrow = null;
+            p.selarrrow = [];
+            var lastSelArrRow = $.data( this, 'selection.lastSelArrRow' );
 
-    	var restoreSelection = function () {
-    	    var i, l,
-    	        p = this.p,
-    	        $grid = $(this);
+            if (lastSelArrRow && lastSelArrRow.length > 0) {
+                for (i = 0, l = lastSelArrRow.length; i < l; i += 1) {
+                    $grid.jqGrid("setSelection", lastSelArrRow[i], false);
+                }
+            }
+            this.grid.bDiv.scrollLeft = $.data( this, 'selection.lastScrollLeft' );
+            $grid.jqGrid('setGridParam', { sortname: $.data( this, 'selection.sortName' ) });
+            $grid.jqGrid('setGridParam', { sortorder: $.data( this, 'selection.sortOrder' ) });
+        };
 
-    	    p.selrow = null;
-    	    p.selarrrow = [];
-    	    var lastSelArrRow = $.data( this, 'selection.lastSelArrRow' );
-
-    	    if (lastSelArrRow && lastSelArrRow.length > 0) {
-    	        for (i = 0, l = lastSelArrRow.length; i < l; i += 1) {
-    	            $grid.jqGrid("setSelection", lastSelArrRow[i], false);
-    	        }
-    	    }
-    	    this.grid.bDiv.scrollLeft = $.data( this, 'selection.lastScrollLeft' );
-    	    $grid.jqGrid('setGridParam', { sortname: $.data( this, 'selection.sortName' ) });
-    	    $grid.jqGrid('setGridParam', { sortorder: $.data( this, 'selection.sortOrder' ) });
-    	};
-
-    	var refreshTableAfterAddOrEdit = function() {
-    	    $(this).jqGrid('setGridParam', {datatype:'json'}).trigger('reloadGrid');
-    	    restoreSelection.call( this );
-    	};
+        var refreshTableAfterAddOrEdit = function() {
+            $(this).jqGrid('setGridParam', {datatype:'json'}).trigger('reloadGrid');
+            restoreSelection.call( this );
+        };
 
 
         $(function() {
 
-        	$( "#tabs" ).tabs();
+            $("#tabs").tabs();
 
-        	$('#loadingDiv').hide();
-        	$('#queryButton').click(function() {
-        		sqlQuery($('#sql').val());
+            $('#loadingDiv').hide();
+            $('#queryButton').click(function() {
+                sqlQuery($('#sql').val());
             });
 
-        	$('#clear').click(function() {
-        		clear();
+            $('#clear').click(function() {
+                clear();
             });
 
-        	$('#dbSelect').change(function() {
-        		createDbSchemaSelectLists($('#dbSelect').val());
+            $('#dbSelect').change(function() {
+                createDbSchemaSelectLists($('#dbSelect').val());
             });
 
-        	$('#schemaSelect').change(function() {
-        		loadQueries($("#schemaSelect").val());
+            $('#schemaSelect').change(function() {
+                loadQueries($("#schemaSelect").val(),$("#dbSelect").val());
             });
 
             /********************************* Database Grid ****************************************/
-        	var dbgrid = $("#dbgrid");
-         	dbgrid.jqGrid({
-        		url: adminBaseUrl + 'dbs',
-        		editurl: adminBaseUrl + 'db',
-        		datatype: "json",
-        		loadonce:true,
-        		autowidth : true,
-        		//height: 255,
-        		width: '100%',
-                colNames:['ID', 'Env', 'Hostname', 'Name', 'Port', 'Service Name', 'SID', ''],
-        		colModel:[
-        		           {name:'id',index:'id', width:30, sorttype:'int'},
-        		           {name:'env',index:'env', editable:true, width:50},
-        		           {name:'hostName',index:'hostName', editable:true, width:250},
-        		           {name:'name',index:'name', editable:true, width:150},
-        		           {name:'port',index:'port', editable:true, width:60},
-        		           {name:'serviceName',index:'name', editable:true, width:100},
-        		           {name:'sid',index:'sid', editable:true, width:100},
-        		           {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
-        		               return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=loadSchemas("+rowObject.id+");></span>";
-        		           }}
-
-        		],
-        		jsonReader: {
+            var dbgrid = $("#dbgrid");
+             dbgrid.jqGrid({
+                url: adminBaseUrl + 'dbs',
+                editurl: adminBaseUrl + 'db',
+                datatype: "json",
+                loadonce:true,
+                autowidth : true,
+                width: '100%',
+                colNames:['ID', 'Env', 'Hostname', 'Name', 'Port', 'Service Name', 'SID'],
+                colModel:[
+                           {name:'id',index:'id', width:40, sorttype:'int'},
+                           {name:'env',index:'env', editable:true, width:50},
+                           {name:'hostName',index:'hostName', editable:true, width:250},
+                           {name:'name',index:'name', editable:true, width:150},
+                           {name:'port',index:'port', editable:true, width:60},
+                           {name:'serviceName',index:'name', editable:true, width:100},
+                           {name:'sid',index:'sid', editable:true, width:100},
+                ],
+                jsonReader: {
                     repeatitems: false,
                     id: "id",
                 },
-        		rowNum:50,
-        		rowTotal: 2000,
-        		rowList : [20,30,50],
-        		mtype: "GET",
-        		rownumbers: true,
-        		rownumWidth: 40,
-        		gridview: true,
-        		pager: '#pdbgrid',
-        		sortname: 'id',
-        		viewrecords: true,
-        		sortorder: "asc",
-        		caption: "Database Servers"  ,
-        		ajaxRowOptions : jsonOptions,
+                rowNum:30,
+                rowTotal: 2000,
+                rowList : [10,20,30],
+                mtype: "GET",
+                rownumbers: true,
+                rownumWidth: 40,
+                gridview: true,
+                pager: '#pdbgrid',
+                sortname: 'id',
+                viewrecords: true,
+                sortorder: "asc",
+                caption: "Database Servers"  ,
+                ajaxRowOptions : jsonOptions,
                 serializeRowData: createJSON,
-                /* ondblClickRow: function(){
-                    var row_id = dbgrid.getGridParam('selrow');
-                    dbgrid.editRow(row_id, true);
-                },*/
-                ondblClickRow: function(rowid) {
-                	loadSchemas(rowid);
+                loadComplete: function(data) {
+                    if (dbgrid.jqGrid('getGridParam','datatype') == 'json') {
+                        dbList = data.rows;
+                        createDbSchemaSelectLists();
+                    }
+                    dbgrid.jqGrid('setGridParam',{datatype: "local"});
                 },
-                loadComplete : function(data) {
-                	dbList = data.rows;
-                	//createDbSchemaSelectLists();
-                },
-                onSortCol: saveSelection,
-                loadComplete: restoreSelection
-            });
-         	dbgrid.jqGrid('navGrid','#pdbgrid',
-                {edit:true,add:true,del:true},
-         	    {
-         		    //edit parameters
-         	    	ajaxEditOptions: jsonOptions,
-         	        serializeEditData: createJSON,
-         	        closeAfterEdit: true,
-         	        afterSubmit: function() { saveSelection.call(this); return [true,,]; },
-         	        afterComplete: refreshTableAfterAddOrEdit
-         	    },
-         		{
-         	    	//add parameters
-         	    	ajaxEditOptions: jsonOptions,
-         	        serializeEditData: createJSON,
-         	        closeAfterAdd: true,
-         	        afterSubmit: function() { saveSelection.call(this); return [true,,]; },
-         	        afterComplete: refreshTableAfterAddOrEdit
-
-         		},
-         		{
-         	        //delete parameters
-         			ajaxDelOptions: jsonOptions,
-         			serializeDelData: createJSON,
-         			afterSubmit: function() { saveSelection.call(this); return [true,,]; },
-         			afterComplete: refreshTableAfterAddOrEdit
-         	    }
-         	);
-
-
-         	/********************************* Schema Grid ****************************************/
-
-         	var schemagrid = $("#schemagrid");
-         	schemagrid.jqGrid({
-        		url: adminBaseUrl + 'schemas/0',
-        		editurl: adminBaseUrl + 'schema/0',
-        		datatype: "json",
-        		autowidth : true,
-        		width: '100%',
-                colNames:['ID', 'Username', 'Password', 'Name', 'Group', ''],
-        		colModel:[
-        		           {name:'id',index:'id', width:30, sorttype:'int'},
-        		           {name:'userName',index:'userName', editable:true, width:150},
-        		           {name:'password',index:'password', editable:true, width:120},
-        		           {name:'name',index:'name', editable:true, width:150},
-        		           {name:'group',index:'group', editable:true, width:150},
-        		           {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
-        		               return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=schemaSelected("+rowObject.id+");></span>";
-        		           }}
-        		],
-        		jsonReader: {
-                    repeatitems: false,
-                    id: "id",
-                },
-        		rowNum:50,
-        		rowTotal: 2000,
-        		rowList : [20,30,50],
-        		loadonce:false,
-        		mtype: "GET",
-        		rownumbers: true,
-        		rownumWidth: 40,
-        		gridview: true,
-        		pager: '#pschemagrid',
-        		sortname: 'id',
-        		viewrecords: true,
-        		sortorder: "asc",
-        		caption: "Database Schemas"  ,
-        		ajaxRowOptions : jsonOptions,
-                serializeRowData: createJSON,
-                ondblClickRow: function(){
-                    var row_id = schemagrid.getGridParam('selrow');
-                    schemagrid.editRow(row_id, true);
+                onSelectRow: function(rowid) {
+                    loadSchemas(rowid);
                 }
+                //onSortCol: saveSelection,
+                //loadComplete: restoreSelection --TODO FIX this
             });
-         	schemagrid.jqGrid('navGrid','#pschemagrid',
+             dbgrid.jqGrid('navGrid','#pdbgrid',
                 {edit:true,add:true,del:true},
-         	    {
-         		    //edit parameters
-         	    	ajaxEditOptions: jsonOptions,
-         	        serializeEditData: createJSON,
-         	        closeAfterEdit: true
-         	    },
-         		{
-         	    	//add parameters
-         	    	ajaxEditOptions: jsonOptions,
-         	        serializeEditData: createJSON,
-         	        closeAfterAdd: true
+                 {
+                     //edit parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterEdit: true,
+                     afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
+                 },
+                 {
+                     //add parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterAdd: true,
+                     afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
 
-         		},
-         		{
-         	        //delete parameters
-         			ajaxDelOptions: jsonOptions,
-         			serializeDelData: createJSON
-         	    }
-         	);
+                 },
+                 {
+                     //delete parameters
+                     ajaxDelOptions: jsonOptions,
+                     serializeDelData: createJSON,
+                     afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
+                 }
+             );
+
+
+             /********************************* Schema Grid ****************************************/
+
+             var schemagrid = $("#schemagrid");
+             schemagrid.jqGrid({
+                url: adminBaseUrl + 'schemas/0',
+                editurl: adminBaseUrl + 'schema/0',
+                datatype: "json",
+                loadonce:true,
+                autowidth : true,
+                width: '100%',
+                colNames:['ID', 'Username', 'Password', 'Name', 'Group', ''],
+                colModel:[
+                           {name:'id',index:'id', width:30, sorttype:'int'},
+                           {name:'userName',index:'userName', editable:true, width:170},
+                           {name:'password',index:'password', editable:true, width:170},
+                           {name:'name',index:'name', editable:true, width:200},
+                           {name:'group',index:'group', editable:true, width:180},
+                           {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
+                               return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=schemaSelected("+rowObject.id+");></span>";
+                           }}
+                ],
+                jsonReader: {
+                    repeatitems: false,
+                    id: "id",
+                },
+                rowNum:50,
+                rowTotal: 2000,
+                rowList : [20,30,50],
+                mtype: "GET",
+                rownumbers: true,
+                rownumWidth: 40,
+                gridview: true,
+                pager: '#pschemagrid',
+                sortname: 'id',
+                viewrecords: true,
+                sortorder: "asc",
+                caption: "Database Schemas"  ,
+                ajaxRowOptions : jsonOptions,
+                serializeRowData: createJSON,
+                ondblClickRow: function(rowid) {
+                    schemaSelected(rowid);
+                },
+            });
+             schemagrid.jqGrid('navGrid','#pschemagrid',
+                {edit:true,add:true,del:true},
+                 {
+                     //edit parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterEdit: true,
+                    afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
+                 },
+                 {
+                     //add parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterAdd: true,
+                    afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
+                 },
+                 {
+                     //delete parameters
+                     ajaxDelOptions: jsonOptions,
+                     serializeDelData: createJSON,
+                    afterSubmit: function() { saveSelection.call(this); return [true,,]; },
+                     afterComplete: refreshTableAfterAddOrEdit
+                 }
+             );
 
 
             /********************************* Query Grid ****************************************/
 
-	     	var querygrid = $("#querygrid");
-	     	querygrid.jqGrid({
-	    		url: adminBaseUrl + 'queries/0',
-	    		editurl: adminBaseUrl + 'query?schemaIds=',
-	    		datatype: "json",
-	    		autowidth : true,
-	    		width: '100%',
-	            colNames:['ID', 'Name', 'UI Group', 'SQL', ''],
-	    		colModel:[
-	    		           {name:'id',index:'id', width:30, sorttype:'int'},
-	    		           {name:'name',index:'name', editable:true, width:100},
-	    		           {name:'group.id',index:'group.id', editable:true, width:100, formatter:'select', edittype: 'select'},
-	    		           {name:'sql',index:'sql', editable:true, width:300, edittype: 'textarea'},
-	    		           {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
-        		               return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=showAssignQueryDialog("+rowObject.id+");></span>";
-        		           }}
-	    		],
-	    		jsonReader: {
-	                repeatitems: false,
-	                id: "id",
-	            },
-	    		rowNum:50,
-	    		rowTotal: 2000,
-	    		rowList : [20,30,50],
-	    		loadonce:false,
-	    		mtype: "GET",
-	    		rownumbers: true,
-	    		rownumWidth: 40,
-	    		gridview: true,
-	    		pager: '#pquerygrid',
-	    		sortname: 'id',
-	    		viewrecords: true,
-	    	    sortorder: "asc",
-	    	    caption: "Queries"  ,
-	    		ajaxRowOptions : jsonOptions,
-	            serializeRowData: createJSON,
-	            ondblClickRow: function(){
-	                var row_id = querygrid.getGridParam('selrow');
-	                querygrid.editRow(row_id, true);
-	            }
-	        });
-	     	querygrid.jqGrid('navGrid','#pquerygrid',
-	            {edit:true,add:true,del:true},
-	     	    {
-	     		    //edit parameters
-	     	    	ajaxEditOptions: jsonOptions,
-	     	        serializeEditData: createJSON,
-	     	        closeAfterEdit: true
-	     	    },
-	     		{
-	     	    	//add parameters
-	     	    	ajaxEditOptions: jsonOptions,
-	     	        serializeEditData: createJSON,
-	     	        closeAfterAdd: true
+             var querygrid = $("#querygrid");
+             querygrid.jqGrid({
+                url: adminBaseUrl + 'queries/0',
+                editurl: adminBaseUrl + 'query?schemaIds=',
+                datatype: "json",
+                loadonce:false,
+                autowidth : true,
+                width: '100%',
+                colNames:['ID', 'Name', 'UI Group', 'SQL', ''],
+                colModel:[
+                           {name:'id',index:'id', width:30, sorttype:'int'},
+                           {name:'name',index:'name', editable:true, width:200},
+                           {name:'group.id',index:'group.id', editable:true, width:150, formatter:'select', edittype: 'select'},
+                           {name:'sql',index:'sql', editable:true, width:450, edittype: 'textarea'},
+                           {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
+                               return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=showAssignQueryDialog("+rowObject.id+");></span>";
+                           }}
+                ],
+                jsonReader: {
+                    repeatitems: false,
+                    id: "id",
+                },
+                rowNum:50,
+                rowTotal: 2000,
+                rowList : [20,30,50],
+                mtype: "GET",
+                rownumbers: true,
+                rownumWidth: 40,
+                gridview: true,
+                pager: '#pquerygrid',
+                sortname: 'id',
+                viewrecords: true,
+                sortorder: "asc",
+                caption: "Queries"  ,
+                ajaxRowOptions : jsonOptions,
+                serializeRowData: createJSON,
+                ondblClickRow: function(){
+                    var row_id = querygrid.getGridParam('selrow');
+                    querygrid.editRow(row_id, true);
+                }
+            });
+             querygrid.jqGrid('navGrid','#pquerygrid',
+                {edit:true,add:true,del:true},
+                 {
+                     //edit parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterEdit: true
+                 },
+                 {
+                     //add parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterAdd: true
 
-	     		},
-	     		{
-	     	        //delete parameters
-	     			ajaxDelOptions: jsonOptions,
-	     			serializeDelData: createJSON
-	     	    }
-	     	);
+                 },
+                 {
+                     //delete parameters
+                     ajaxDelOptions: jsonOptions,
+                     serializeDelData: createJSON
+                 }
+             );
 
 
 
 
             /********************************* Group Grid ****************************************/
 
-     	    var groupgrid = $("#groupgrid");
-     	    groupgrid.jqGrid({
-    	        url: adminBaseUrl + 'groups',
-    		    editurl: adminBaseUrl + 'group',
-    		    datatype: "json",
-    		    autowidth : true,
-    		    width: '100%',
+             var groupgrid = $("#groupgrid");
+             groupgrid.jqGrid({
+                url: adminBaseUrl + 'groups',
+                editurl: adminBaseUrl + 'group',
+                datatype: "json",
+                autowidth : true,
+                width: '100%',
                 colNames:['ID', 'Name', 'Order'],
-    		    colModel:[
-    		        {name:'id',index:'id', width:30, sorttype:'int'},
-    		        {name:'name',index:'name', editable:true, width:400},
+                colModel:[
+                    {name:'id',index:'id', width:30, sorttype:'int'},
+                    {name:'name',index:'name', editable:true, width:400},
                     {name:'order',index:'order', editable:true, width:100}
-    		    ],
-    		    jsonReader: {
+                ],
+                jsonReader: {
                     repeatitems: false,
                     id: "id",
                 },
-    		    rowNum:50,
-    		    rowTotal: 2000,
-    		    rowList : [20,30,50],
-    		    loadonce:false,
-    		    mtype: "GET",
-    		    rownumbers: true,
-    		    rownumWidth: 40,
-    		    gridview: true,
-    		    pager: '#pgroupgrid',
-    		     sortname: 'id',
-    		    viewrecords: true,
-    		    sortorder: "asc",
-    		    caption: "UI Groups"  ,
-    		    ajaxRowOptions : jsonOptions,
+                rowNum:50,
+                rowTotal: 2000,
+                rowList : [20,30,50],
+                loadonce:false,
+                mtype: "GET",
+                rownumbers: true,
+                rownumWidth: 40,
+                gridview: true,
+                pager: '#pgroupgrid',
+                 sortname: 'id',
+                viewrecords: true,
+                sortorder: "asc",
+                caption: "UI Groups"  ,
+                ajaxRowOptions : jsonOptions,
                 serializeRowData: createJSON,
                 ondblClickRow: function(){
                     var row_id = querygrid.getGridParam('selrow');
                     groupgrid.editRow(row_id, true);
                 },
                 loadComplete: function() {
-                	var ids = $(this).getDataIDs();
-                	var groups = {};
+                    var ids = $(this).getDataIDs();
+                    var groups = {};
 
-                	for(var i=0;i<ids.length;i++) {
-                		rowData=$(this).getRowData(ids[i]);
-                		groups[rowData.id] = rowData.name;
-                	}
-                	querygrid.setColProp('group.id', { editoptions: { value: groups} });
+                    for(var i=0;i<ids.length;i++) {
+                        rowData=$(this).getRowData(ids[i]);
+                        groups[rowData.id] = rowData.name;
+                    }
+                    querygrid.setColProp('group.id', { editoptions: { value: groups} });
                 }
             });
-     	    groupgrid.jqGrid('navGrid','#pgroupgrid',
+             groupgrid.jqGrid('navGrid','#pgroupgrid',
                 {edit:true,add:true,del:true},
-     	        {
-     		        //edit parameters
-     	    	    ajaxEditOptions: jsonOptions,
-     	            serializeEditData: createJSON,
-     	            closeAfterEdit: true
-     	        },
-     		    {
-     	    	    //add parameters
-     	    	    ajaxEditOptions: jsonOptions,
-     	            serializeEditData: createJSON,
-     	            closeAfterAdd: true
-     		    },
-     		    {
-     	            //delete parameters
-     			    ajaxDelOptions: jsonOptions,
-     			    serializeDelData: createJSON
-     	        }
-     	    );
+                 {
+                     //edit parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterEdit: true
+                 },
+                 {
+                     //add parameters
+                     ajaxEditOptions: jsonOptions,
+                     serializeEditData: createJSON,
+                     closeAfterAdd: true
+                 },
+                 {
+                     //delete parameters
+                     ajaxDelOptions: jsonOptions,
+                     serializeDelData: createJSON
+                 }
+             );
 
-     	    /********************************* Assign Query to Schemas Grid ****************************************/
+             /********************************* Assign Query to Schemas Grid ****************************************/
 
-     	    var assignSchemaGrid = $("#assignSchemaGrid");
-     	    assignSchemaGrid.jqGrid({
-    	        url: adminBaseUrl + 'schemas/query/0',
-    		    editurl: adminBaseUrl + 'schemas/query/0',
-    		    datatype: "json",
-    		    autowidth : true,
-    		    width: '100%',
+             var assignSchemaGrid = $("#assignSchemaGrid");
+             assignSchemaGrid.jqGrid({
+                url: adminBaseUrl + 'schemas/query/0',
+                editurl: adminBaseUrl + 'schemas/query/0',
+                datatype: "json",
+                autowidth : true,
+                width: '100%',
                 colNames:['', 'ID', 'Name'],
-    		    colModel:[
-    		        {name: 'flag', index: 'flag', width:30, editable:true, edittype:'checkbox', editoptions: { value:"True:False"}, formatter: "checkbox"},
-    		        {name:'id',index:'id', width:30, sorttype:'int'},
-    		        {name:'name',index:'name', editable:false, width:150}
-    		    ],
-    		    jsonReader: {
+                colModel:[
+                    {name: 'flag', index: 'flag', width:30, editable:true, edittype:'checkbox', editoptions: { value:"True:False"}, formatter: "checkbox"},
+                    {name:'id',index:'id', width:30, sorttype:'int'},
+                    {name:'name',index:'name', editable:false, width:150}
+                ],
+                jsonReader: {
                     repeatitems: false,
                     id: "id",
                 },
-    		    rowNum: 50,
-    		    rowTotal: 2000,
-    		    rowList : [20,30,50],
-    		    loadonce: false,
-    		    mtype: "GET",
-    		    rownumbers: true,
-    		    rownumWidth: 40,
-    		    gridview: true,
-    		    pager: '#passignSchemaGrid',
-    		    sortname: 'id',
-    		    viewrecords: true,
-    		    sortorder: "asc",
-    		    caption: "Assign Query to Schemas"  ,
-    		    ajaxRowOptions : jsonOptions,
+                rowNum: 50,
+                rowTotal: 2000,
+                rowList : [20,30,50],
+                loadonce: false,
+                mtype: "GET",
+                rownumbers: true,
+                rownumWidth: 40,
+                gridview: true,
+                pager: '#passignSchemaGrid',
+                sortname: 'id',
+                viewrecords: true,
+                sortorder: "asc",
+                caption: "Assign Query to Schemas"  ,
+                ajaxRowOptions : jsonOptions,
                 serializeRowData: createJSON,
                 ondblClickRow: function(){
                     var row_id = assignSchemaGrid.getGridParam('selrow');
                     assignSchemaGrid.editRow(row_id, true);
                 }
             });
-     	    assignSchemaGrid.jqGrid('navGrid','#passignSchemaGrid',
+             assignSchemaGrid.jqGrid('navGrid','#passignSchemaGrid',
                 {edit:true,add:true,del:true}
-     	    );
-	    });
+             );
+        });
 
-        function createDbSchemaSelectLists(dbId, schemaId) {
-        	$("#dbSelect").empty();
-        	$("<option/>").val(0).appendTo("#dbSelect");
-        	$.each(dbList, function(id, db) {
-        		$("<option/>").val(db.id).text(db.name).appendTo("#dbSelect");
-                //(dbId == null && id == 0) || dbId == db.id)
-                if (dbId == db.id) {
-                	$("#schemaSelect").empty();
-                	$("<option/>").val(0).appendTo("#schemaSelect");
-                	$.each(db.schemas, function(id, schema) {
-                		// if schemaId is null load queries of the first schema, else load from the selected ones
-                		//(schemaId == null && id == 0) || schemaId == schema.id
-                		if (schemaId == schema.id) {
-                			loadQueries(schema.id);
-                	    }
-                		$("<option/>").val(schema.id).text(schema.name).appendTo("#schemaSelect");
-                	});
-                }
-        	});
-        	$("#dbSelect").val(dbId);
-        	$("#schemaSelect").val(schemaId);
-            console.log(dbId, schemaId);
+        function SortByName(x,y) {
+            return ((x.name  == y.name) ? 0 : ((x.name > y.name) ? 1 : -1 ));
         }
 
+        function createDbSchemaSelectLists(dbId, schemaId) {
+            if (dbId == undefined) dbId=0;
+            if (schemaId == undefined) schemaId=0;
+            loadQueries(dbId, schemaId)
 
+            dbList.sort(SortByName);
+            $("#dbSelect").empty();
+            $("#schemaSelect").empty();
+            $("<option>").val(0).appendTo("#dbSelect");
+            $.each(dbList, function(id, db) {
+                $("<option>").val(db.id).text(db.name).appendTo("#dbSelect");
+                if (dbId == db.id) {
+                    $("#schemaSelect").empty();
+                    $("<option>").val(0).appendTo("#schemaSelect");
+                    $.each(db.schemas, function(id, schema) {
+                        $("<option>").val(schema.id).text(schema.name).appendTo("#schemaSelect");
+                    });
+                }
+            });
+            $("#dbSelect").val(dbId);
+            $("#schemaSelect").val(schemaId);
+        }
 
         function showAssignQueryDialog(queryId) {
             var listSchemasUrl = adminBaseUrl + "schemas/query/" + queryId;
@@ -456,42 +453,42 @@
             $("#assignSchemaGrid").setCaption("Query ID: '" + queryId + "'");
             $("#assignSchemaGrid").trigger("reloadGrid");
 
- 	        var dialog = $("#assignSchemasDialog")
- 	            .dialog({
- 	                autoOpen: true,
- 	                resizable: true,
- 	                buttons: {
- 	                	"Cancel": function () {
- 	                	    $(this).dialog("close");
- 	                	}
- 	                },
- 	                title: 'Assign Query to Schemas'
- 	            });
- 	        dialog.dialog('open');
+             var dialog = $("#assignSchemasDialog")
+                 .dialog({
+                     autoOpen: true,
+                     resizable: true,
+                     buttons: {
+                         "Cancel": function () {
+                             $(this).dialog("close");
+                         }
+                     },
+                     title: 'Assign Query to Schemas'
+                 });
+             dialog.dialog('open');
         }
 
 
         function createJSON(postdata) {
-        	if (postdata.id === '_empty')
-        		postdata.id = null;
-        	return JSON.stringify(deepen(postdata));
+            if (postdata.id === '_empty')
+                postdata.id = null;
+            return JSON.stringify(deepen(postdata));
         }
 
         // converts JS objects with dot notation into a multi-level json string
         // example: group.id  group:{id:1}
         function deepen(o) {
             var oo = {}, t, parts, part;
-        	for (var k in o) {
-        	    t = oo;
-        	    parts = k.split('.');
-        	    var key = parts.pop();
-        	    while (parts.length) {
-        	        part = parts.shift();
-        	        t = t[part] = t[part] || {};
-        	    }
-        	    t[key] = o[k]
-        	}
-        	return oo;
+            for (var k in o) {
+                t = oo;
+                parts = k.split('.');
+                var key = parts.pop();
+                while (parts.length) {
+                    part = parts.shift();
+                    t = t[part] = t[part] || {};
+                }
+                t[key] = o[k]
+            }
+            return oo;
         }
 
 
@@ -503,33 +500,34 @@
 
             $("#schemagrid").jqGrid('setGridParam',{url:listSchemaUrl,editurl:editSchemaUrl});
             $("#schemagrid").setCaption("Database Schemas of : '" + database.name + "'");
-            $("#schemagrid").trigger("reloadGrid");
+            $("#schemagrid").jqGrid('setGridParam',{loadonce: false, datatype: "json"});
+            $("#schemagrid").trigger("reloadGrid",[{page:1}]);
+            $("#schemagrid").jqGrid('setGridParam',{loadonce: true, datatype: "local"});
         }
 
         function schemaSelected(schemaId) {
-        	var dbId= $("#dbgrid").getGridParam('selrow');
-        	createDbSchemaSelectLists(dbId, schemaId);
+            var dbId= $("#dbgrid").getGridParam('selrow');
+            createDbSchemaSelectLists(dbId, schemaId);
+            $("#tabs").tabs("select",2);
         }
 
-        function loadQueries(schemaId) {
-        	$("#tabs").tabs("select",2);
-
+        function loadQueries(dbId, schemaId) {
             var schema = $("#schemagrid").jqGrid('getRowData',schemaId);
 
-            var listQueryUrl = adminBaseUrl + "queries/" + schemaId;
+            var listQueryUrl = adminBaseUrl + "queries?dbId=" + dbId + "&schemaId="+schemaId;
             var editQueryUrl = adminBaseUrl + "query?schemaIds=" + schemaId;
-
-            console.log(editQueryUrl);
 
             $("#querygrid").jqGrid('setGridParam',{url:listQueryUrl,editurl:editQueryUrl});
             $("#querygrid").setCaption("Queries of : '" + schema.name + "'");
-            $("#querygrid").trigger("reloadGrid");
+            $("#querygrid").jqGrid('setGridParam',{loadonce: false, datatype: "json"});
+            $("#querygrid").trigger("reloadGrid",[{page:1}]);
+            $("#querygrid").jqGrid('setGridParam',{loadonce: true, datatype: "local"});
         }
 
-     	/********************************* DB Form ****************************************/
+         /********************************* DB Form ****************************************/
 
         function sqlQuery(sql) {
-        	$.ajax({
+            $.ajax({
                 url: "rest/query/query",
                 dataType: "json",
                 type: 'POST',
@@ -540,7 +538,7 @@
                 success: function (result) {
                     if (result) {
                         if (!result.Error) {
-                        	renderGrid(result.colNames, result.colModel, result.rows);
+                            renderGrid(result.colNames, result.colModel, result.rows);
                         }
                     }
                 },
@@ -557,10 +555,10 @@
 
         function renderGrid(colNames, colModel, rows) {
 
-        	$('#list47').jqGrid('GridUnload');
+            $('#list47').jqGrid('GridUnload');
 
 
-        	var lastgridsel;
+            var lastgridsel;
             jQuery("#list47").jqGrid({
                 data: [],
                 datatype: "local",
@@ -586,32 +584,30 @@
 
 
             for(var i=0; i<=rows.length; i++) {
-            	jQuery("#list47").jqGrid('addRowData',i+1,rows[i]);
+                jQuery("#list47").jqGrid('addRowData',i+1,rows[i]);
             }
 
             //$('#list47').jqGrid('GridUnload');
         }
 
         function clear() {
-        	$("#list47").jqGrid("clearGridData", true).trigger("reloadGrid");
+            $("#list47").jqGrid("clearGridData", true).trigger("reloadGrid");
         }
 
     </script>
 </head>
 <body>
 
-
-
-	<div id="tabs">
-		<ul>
-			<li><a href="#tabs-1">DB Forms</a></li>
-			<li><a href="#tabs-2">Databases</a></li>
-			<li><a href="#tabs-3">Queries</a></li>
-			<li><a href="#tabs-4">UI Groups</a></li>
-		</ul>
-		<div id="tabs-1">
-			<p>
-			    <textarea id="sql"></textarea><br>
+    <div id="tabs">
+        <ul>
+            <li><a href="#tabs-1">DB Forms</a></li>
+            <li><a href="#tabs-2">Databases</a></li>
+            <li><a href="#tabs-3">Queries</a></li>
+            <li><a href="#tabs-4">UI Groups</a></li>
+        </ul>
+        <div id="tabs-1">
+            <p>
+                <textarea id="sql"></textarea><br>
                 <button id="queryButton">Submit</button>
 
                 <br/><br/>
@@ -620,51 +616,49 @@
 
                 <br/>
 
-			    <div id="loadingDiv">loading...</div>
-	            <table id="list47"></table>
-	            <div id="plist47"></div>
-			</p>
-		</div>
-		<div id="tabs-2">
-			<div>
+                <div id="loadingDiv">loading...</div>
+                <table id="list47"></table>
+                <div id="plist47"></div>
+            </p>
+        </div>
+        <div id="tabs-2">
+            <div>
                 <table id="dbgrid"></table>
-	            <div id="pdbgrid"></div>
-			</div>
-			<br/>
-			<div>
-			    <table id="schemagrid"></table>
-	            <div id="pschemagrid"></div>
-			</div>
-		</div>
-		<div id="tabs-3">
-		    <div>
-                Database:<select style="width:300px" id="dbSelect"></select><br/>
-                Schema:<select style="width:300px" id="schemaSelect"></select>
-
+                <div id="pdbgrid"></div>
             </div>
-			<div>
-			    <table id="querygrid"></table>
-	            <div id="pquerygrid"></div>
-			</div>
+            <br/>
+            <div>
+                <table id="schemagrid"></table>
+                <div id="pschemagrid"></div>
+            </div>
+        </div>
+        <div id="tabs-3">
+            <div>
+                Database:<select style="width:300px" id="dbSelect"></select>&nbsp;&nbsp;&nbsp;Schema:<select style="width:300px" id="schemaSelect"></select><br><br>
+            </div>
+            <div>
+                <table id="querygrid"></table>
+                <div id="pquerygrid"></div>
+            </div>
 
-		</div>
-		<div id="tabs-4">
+        </div>
+        <div id="tabs-4">
 
-		    <div>
-			    <table id="groupgrid"></table>
-	            <div id="pgroupgrid"></div>
-			</div>
+            <div>
+                <table id="groupgrid"></table>
+                <div id="pgroupgrid"></div>
+            </div>
 
-		</div>
+        </div>
 
-	</div>
+    </div>
 
-	<div id="assignSchemasDialog" style="display:none">
-	    <div>
-		    <table id="assignSchemaGrid"></table>
-	        <div id="passignSchemaGrid"></div>
-		</div>
-	</div>
+    <div id="assignSchemasDialog" style="display:none">
+        <div>
+            <table id="assignSchemaGrid"></table>
+            <div id="passignSchemaGrid"></div>
+        </div>
+    </div>
 
 </body>
 </html>
