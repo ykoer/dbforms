@@ -149,7 +149,8 @@ public class DatabaseService {
     }
 
     public void deleteQuery(Query query) {
-        em.createNamedQuery("Query.delete").setParameter("id", query.getId()).executeUpdate();
+        Query q = getQuery(query.getId());
+        em.remove(q);
     }
 
     /************************************************************************

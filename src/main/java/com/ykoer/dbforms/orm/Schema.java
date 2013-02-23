@@ -14,6 +14,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.PreRemove;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
@@ -36,37 +37,37 @@ public class Schema extends AbstractGrid {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @ManyToOne
     @JoinColumn(name="db_id")
-    private Database database; 
-    
+    private Database database;
+
     @NotNull
     @NotEmpty
     private String userName;
-    
+
     @NotNull
     @NotEmpty
     private String password;
-    
+
     @NotNull
     @NotEmpty
     private String name;
-    
+
     @Column(name="group_name")
     private String group;
-    
-    @ManyToMany(fetch = FetchType.EAGER, cascade={CascadeType.ALL})
-    @JoinTable(name="DBF_SCHEMA_QUERIES", 
-               joinColumns=@JoinColumn(name="schema_id", referencedColumnName = "id"), 
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade={CascadeType.ALL})
+    @JoinTable(name="DBF_SCHEMA_QUERIES",
+               joinColumns=@JoinColumn(name="schema_id", referencedColumnName = "id"),
                inverseJoinColumns=@JoinColumn(name="query_id", referencedColumnName = "id")
     )
     private Set<Query> queries;
-    
+
     @Transient
     private boolean flag = false;
 
-    
+
     public Long getId() {
         return id;
     }
@@ -83,19 +84,19 @@ public class Schema extends AbstractGrid {
     public void setDatabase(Database database) {
         this.database = database;
     }
-    
+
     public String getUserName() {
         return userName;
     }
-    
+
     public void setUserName(String userName) {
         this.userName = userName;
     }
-    
+
     public String getPassword() {
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -107,14 +108,14 @@ public class Schema extends AbstractGrid {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public String getGroup() {
         return group;
     }
 
     public void setGroup(String group) {
         this.group = group;
-    } 
+    }
 
     @JsonIgnore
     public Set<Query> getQueries() {
@@ -125,13 +126,22 @@ public class Schema extends AbstractGrid {
         this.queries=queries;
     }
 
-    
+
     public boolean isFlag() {
         return flag;
     }
 
-    
+
     public void setFlag(boolean flag) {
         this.flag = flag;
+    }
+
+    @PreRemove
+    private void removeSchemaFromQueries() {
+        if (queries != null) {
+            for (Query query: queries) {
+                query.getSchemas().remove(this);
+            }
+        }
     }
 }

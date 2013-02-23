@@ -1,5 +1,6 @@
 package com.ykoer.dbforms.orm;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -14,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.PreRemove;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
@@ -53,10 +55,10 @@ public class Query extends AbstractGrid {
     @Column(name="sql_query")
     private String sql;
 
-    @ManyToMany(mappedBy = "queries", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "queries", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Schema> schemas;
 
-    @OneToMany(mappedBy="query", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy="query", fetch = FetchType.LAZY)
     private Set<Clause> clauses;
 
 
@@ -109,5 +111,14 @@ public class Query extends AbstractGrid {
 
     public void setClauses(Set<Clause> clauses) {
         this.clauses=clauses;
+    }
+
+    @PreRemove
+    private void removeQueryFromSchemas() {
+        if (schemas != null) {
+            for (Schema schema: schemas) {
+                schema.getQueries().remove(this);
+            }
+        }
     }
 }
