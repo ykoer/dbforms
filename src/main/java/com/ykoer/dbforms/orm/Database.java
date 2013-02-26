@@ -6,6 +6,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -26,11 +27,11 @@ import org.hibernate.validator.constraints.NotEmpty;
 })
 @XmlRootElement
 public class Database extends AbstractGrid {
-    
+
     // ---------------------------- Members --------------------------------
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long   id;
 
     @NotNull
@@ -51,13 +52,13 @@ public class Database extends AbstractGrid {
     @NotNull
     @NotEmpty
     private String name;
-    
+
     @OneToMany(mappedBy="database", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Schema> schemas;
 
-    
+
     // ---------------------------- Setters and Getters --------------------------------
-    
+
 
     public Long getId() {
         return id;
@@ -106,7 +107,7 @@ public class Database extends AbstractGrid {
     public void setEnv(String env) {
         this.env = env;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -115,15 +116,15 @@ public class Database extends AbstractGrid {
         this.name = name;
     }
 
-    
+
     public Set<Schema> getSchemas() {
         return schemas;
     }
 
-    
+
     public void setSchemas(Set<Schema> schemas) {
         this.schemas = schemas;
-        
-        
+
+
     }
 }

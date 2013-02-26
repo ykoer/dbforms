@@ -13,6 +13,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.jboss.resteasy.annotations.Form;
 
 import com.ykoer.dbforms.manager.DatabaseService;
 import com.ykoer.dbforms.orm.Clause;
@@ -20,7 +21,8 @@ import com.ykoer.dbforms.orm.Database;
 import com.ykoer.dbforms.orm.Group;
 import com.ykoer.dbforms.orm.Query;
 import com.ykoer.dbforms.orm.Schema;
-import com.ykoer.dbforms.util.JQGridWrapper;
+import com.ykoer.dbforms.jqgrid.JQGridParams;
+import com.ykoer.dbforms.jqgrid.JQGridResponse;
 
 
 /**
@@ -45,10 +47,10 @@ public class DBResourceRESTService {
      ************************************************************************/
 
     @GET
-    @Path("/dbs")
+    @Path("/db/all")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper listAllDatabases() {
-        return new JQGridWrapper(databaseService.getAllDatabases());
+    public JQGridResponse listAllDatabases(@Form JQGridParams params) {
+        return new JQGridResponse(databaseService.getAllDatabases(params));
     }
 
     @GET
@@ -77,14 +79,14 @@ public class DBResourceRESTService {
 
     @GET
     @Path("/schemas/{dbId}")
-    public JQGridWrapper getSchemasBydbId(@PathParam ("dbId") long dbId) {
-        return new JQGridWrapper(databaseService.getSchemasByDatabaseId(dbId));
+    public JQGridResponse getSchemasBydbId(@PathParam ("dbId") long dbId, @Form JQGridParams params) {
+        return new JQGridResponse(databaseService.getSchemasByDatabaseId(dbId, params));
     }
 
     @GET
     @Path("/schemas/query/{queryId}")
-    public JQGridWrapper getSchemasByQueryId(@PathParam ("queryId") long queryId) {
-        return new JQGridWrapper(databaseService.getSchemasByQueryId(queryId));
+    public JQGridResponse getSchemasByQueryId(@PathParam ("queryId") long queryId) {
+        return new JQGridResponse(databaseService.getSchemasByQueryId(queryId));
     }
 
     @GET
@@ -117,17 +119,17 @@ public class DBResourceRESTService {
     @GET
     @Path("/queries2")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper listAllQueries() {
-        return new JQGridWrapper(databaseService.getAllQueries());
+    public JQGridResponse listAllQueries() {
+        return new JQGridResponse(databaseService.getAllQueries());
     }
 
     @GET
     @Path("/queries")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper getQueries(@QueryParam ("dbId") long dbId,
+    public JQGridResponse getQueries(@QueryParam ("dbId") long dbId,
                                     @QueryParam ("schemaId") long schemaId) {
 
-        return new JQGridWrapper(databaseService.getQueries(dbId, schemaId));
+        return new JQGridResponse(databaseService.getQueries(dbId, schemaId));
     }
 
     @GET
@@ -142,10 +144,14 @@ public class DBResourceRESTService {
     public int setQuery(@QueryParam ("schemaIds") List<Long> schemaIds,
                          Query query) {
 
+        System.out.println(schemaIds.get(0));
+        System.out.println(query.getName());
+        System.out.println(query.getOper());
+
         if ("edit".equals(query.getOper()) || "add".equals(query.getOper()))
             databaseService.updateQuery(query, schemaIds);
-        else if ("del".equals(query.getOper()))
-            databaseService.deleteQuery(query);
+//        else if ("del".equals(query.getOper()))
+//            databaseService.deleteQuery(query);
         return 1;
     }
 
@@ -158,8 +164,8 @@ public class DBResourceRESTService {
     @GET
     @Path("/clauses/{queryId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper listAllClauses(@PathParam ("queryId") long queryId) {
-        return new JQGridWrapper(databaseService.getAllClauses(queryId));
+    public JQGridResponse listAllClauses(@PathParam ("queryId") long queryId) {
+        return new JQGridResponse(databaseService.getAllClauses(queryId));
     }
 
     @GET
@@ -193,8 +199,8 @@ public class DBResourceRESTService {
     @GET
     @Path("/groups")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper listAllGroups() {
-        return new JQGridWrapper(databaseService.getAllGroups());
+    public JQGridResponse listAllGroups() {
+        return new JQGridResponse(databaseService.getAllGroups());
     }
 
     @POST

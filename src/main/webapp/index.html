@@ -64,6 +64,28 @@
             restoreSelection.call( this );
         };
 
+        var createJSON = function(postdata) {
+            if (postdata.id === '_empty')
+                postdata.id = null;
+            return JSON.stringify(deepen(postdata));
+        }
+
+        // converts JS objects with dot notation into a multi-level json string
+        // example: group.id  group:{id:1}
+        var deepen = function(o) {
+            var oo = {}, t, parts, part;
+            for (var k in o) {
+                t = oo;
+                parts = k.split('.');
+                var key = parts.pop();
+                while (parts.length) {
+                    part = parts.shift();
+                    t = t[part] = t[part] || {};
+                }
+                t[key] = o[k]
+            }
+            return oo;
+        }
 
         $(function() {
 
@@ -89,11 +111,11 @@
             /********************************* Database Grid ****************************************/
             var dbgrid = $("#dbgrid");
              dbgrid.jqGrid({
-                url: adminBaseUrl + 'dbs',
+                url: adminBaseUrl + 'db/all',
                 editurl: adminBaseUrl + 'db',
                 datatype: "json",
-                loadonce:true,
-                autowidth : true,
+                loadonce: false,
+                autowidth: true,
                 width: '100%',
                 colNames:['ID', 'Env', 'Hostname', 'Name', 'Port', 'Service Name', 'SID'],
                 colModel:[
@@ -124,11 +146,8 @@
                 ajaxRowOptions : jsonOptions,
                 serializeRowData: createJSON,
                 loadComplete: function(data) {
-                    if (dbgrid.jqGrid('getGridParam','datatype') == 'json') {
-                        dbList = data.rows;
-                        createDbSchemaSelectLists();
-                    }
-                    dbgrid.jqGrid('setGridParam',{datatype: "local"});
+                    dbList = data.rows;
+                    createDbSchemaSelectLists();
                 },
                 onSelectRow: function(rowid) {
                     loadSchemas(rowid);
@@ -172,7 +191,7 @@
                 url: adminBaseUrl + 'schemas/0',
                 editurl: adminBaseUrl + 'schema/0',
                 datatype: "json",
-                loadonce:true,
+                loadonce: false,
                 autowidth : true,
                 width: '100%',
                 colNames:['ID', 'Username', 'Password', 'Name', 'Group', ''],
@@ -196,11 +215,10 @@
                 mtype: "GET",
                 rownumbers: true,
                 rownumWidth: 40,
-                gridview: true,
                 pager: '#pschemagrid',
                 sortname: 'id',
-                viewrecords: true,
                 sortorder: "asc",
+                viewrecords: true,
                 caption: "Database Schemas"  ,
                 ajaxRowOptions : jsonOptions,
                 serializeRowData: createJSON,
@@ -467,31 +485,6 @@
              dialog.dialog('open');
         }
 
-
-        function createJSON(postdata) {
-            if (postdata.id === '_empty')
-                postdata.id = null;
-            return JSON.stringify(deepen(postdata));
-        }
-
-        // converts JS objects with dot notation into a multi-level json string
-        // example: group.id  group:{id:1}
-        function deepen(o) {
-            var oo = {}, t, parts, part;
-            for (var k in o) {
-                t = oo;
-                parts = k.split('.');
-                var key = parts.pop();
-                while (parts.length) {
-                    part = parts.shift();
-                    t = t[part] = t[part] || {};
-                }
-                t[key] = o[k]
-            }
-            return oo;
-        }
-
-
         function loadSchemas(rowid) {
             var database = $("#dbgrid").jqGrid('getRowData',rowid);
 
@@ -500,9 +493,7 @@
 
             $("#schemagrid").jqGrid('setGridParam',{url:listSchemaUrl,editurl:editSchemaUrl});
             $("#schemagrid").setCaption("Database Schemas of : '" + database.name + "'");
-            $("#schemagrid").jqGrid('setGridParam',{loadonce: false, datatype: "json"});
             $("#schemagrid").trigger("reloadGrid",[{page:1}]);
-            $("#schemagrid").jqGrid('setGridParam',{loadonce: true, datatype: "local"});
         }
 
         function schemaSelected(schemaId) {
@@ -521,7 +512,7 @@
             $("#querygrid").setCaption("Queries of : '" + schema.name + "'");
             $("#querygrid").jqGrid('setGridParam',{loadonce: false, datatype: "json"});
             $("#querygrid").trigger("reloadGrid",[{page:1}]);
-            $("#querygrid").jqGrid('setGridParam',{loadonce: true, datatype: "local"});
+            $("#querygrid").jqGrid('setGridParam',{loadonce: true, datatype: "json"});
         }
 
          /********************************* DB Form ****************************************/

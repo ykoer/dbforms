@@ -16,35 +16,35 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import com.ykoer.dbforms.util.JQGridWrapper;
+import com.ykoer.dbforms.jqgrid.JQGridResponse;
 
 
 
 /**
  * JAX-RS Example
- * 
+ *
  * This class produces a RESTful service to manage the DB configurations.
  */
 @Path("/query")
 @RequestScoped
 public class QueryResourceRESTService {
-    
+
 
     @POST
     @Path("/query")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public JQGridWrapper runSQL(String sql) {
-        
-        
+    public JQGridResponse runSQL(String sql) {
+
+
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/diziler","diziler","password");
-        
+
             Statement statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql);
-            
+
             return createJQGridData(rs);
-        
+
         } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -52,33 +52,33 @@ public class QueryResourceRESTService {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
         return null;
     }
-    
-    /** 
+
+    /**
      * Creates Grid Data from a given resultset
-     * 
-     * 
+     *
+     *
      * @param rs The resultset objec
      * @return JSON or XML formatted jqgrid data
-     * 
+     *
      * <pre>
      * {
      *   "colModel": [
      *     {
-     *       "index": "col1", 
-     *       "name": "col1", 
+     *       "index": "col1",
+     *       "name": "col1",
      *       "sorttype": "int"
      *     }
-     *   ], 
+     *   ],
      *   "colNames": [
      *     "col1"
-     *   ], 
+     *   ],
      *   "rows": [
      *     {
      *       "col1": "Value 1"
-     *     }, 
+     *     },
      *     {
      *       "col1": "Value 1",
      *     }
@@ -86,12 +86,12 @@ public class QueryResourceRESTService {
      * }
      * </pre>
      */
-    private JQGridWrapper createJQGridData(ResultSet rs) {
-        
+    private JQGridResponse createJQGridData(ResultSet rs) {
+
         List<Map<String,Object>> rows = new ArrayList<Map<String,Object>>();
         List<String> colNames = new ArrayList<String>();
         List<Map<String,Object>> colModel = new ArrayList<Map<String,Object>>();
-        
+
         try {
             java.sql.ResultSetMetaData rsmd = rs.getMetaData();
             int numColumns = rsmd.getColumnCount();
@@ -150,18 +150,18 @@ public class QueryResourceRESTService {
             e.printStackTrace();
         }
 
-        return new JQGridWrapper(rows, colNames, colModel);
+        return new JQGridResponse(rows, colNames, colModel);
     }
-    
+
     /**
      * Maps SQL types to Javascript JQGrid types
      * {@link http://www.docjar.com/html/api/java/sql/Types.java.html}
-     * 
+     *
      * @param sqlType The SQL Type Number
      * @return
      */
     private String getJsType(int sqlType) {
-                
+
         switch (sqlType) {
         case java.sql.Types.BIGINT:
         case java.sql.Types.INTEGER:

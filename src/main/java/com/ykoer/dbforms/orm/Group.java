@@ -3,6 +3,7 @@ package com.ykoer.dbforms.orm;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -23,23 +24,23 @@ import org.hibernate.validator.constraints.NotEmpty;
     @NamedQuery(name="Group.delete", query="delete from Group g where g.id = :id")
 })
 public class Group extends AbstractGrid {
-    
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
-    
+
     @NotNull
     @NotEmpty
     private String name;
-    
+
     @Column(name="ui_order")
     private Integer order;
-    
-    
+
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }

@@ -3,6 +3,7 @@ package com.ykoer.dbforms.orm;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -25,15 +26,15 @@ import org.hibernate.validator.constraints.NotEmpty;
     @NamedQuery(name="Clause.delete", query="delete from Clause c where c.id = :id")
 })
 public class Clause extends AbstractGrid {
-    
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToOne
     @JoinColumn(name="query_id",nullable=false)
-    private Query query; 
-    
+    private Query query;
+
     @NotNull
     @NotEmpty
     private String name;
@@ -42,21 +43,21 @@ public class Clause extends AbstractGrid {
     @NotEmpty
     @Column(name="html_type")
     private String htmlType;
-    
+
     @NotNull
     @NotEmpty
     @Column(name="data_type")
     private String dataTye;
-    
+
     @NotNull
     @NotEmpty
     private String title;
-    
-    
+
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -68,7 +69,7 @@ public class Clause extends AbstractGrid {
     public void setQuery(Query query) {
         this.query = query;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -76,7 +77,7 @@ public class Clause extends AbstractGrid {
     public void setName(String name) {
         this.name = name;
     }
-   
+
     public String getHtmlType() {
         return htmlType;
     }
@@ -84,7 +85,7 @@ public class Clause extends AbstractGrid {
     public void setHtmlType(String htmlType) {
         this.htmlType = htmlType;
     }
-    
+
     public String getDataTye() {
         return dataTye;
     }
@@ -92,12 +93,12 @@ public class Clause extends AbstractGrid {
     public void setDataTye(String dataTye) {
         this.dataTye = dataTye;
     }
-    
+
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
-    }    
+    }
 }

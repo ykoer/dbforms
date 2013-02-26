@@ -8,6 +8,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import com.ykoer.dbforms.jqgrid.JQGridParams;
 import com.ykoer.dbforms.orm.Clause;
 import com.ykoer.dbforms.orm.Database;
 import com.ykoer.dbforms.orm.Group;
@@ -30,8 +31,26 @@ public class DatabaseService {
      ************************************************************************/
 
     @SuppressWarnings("unchecked")
-    public List<Database> getAllDatabases() {
-        return em.createNamedQuery("Database.findAll").getResultList();
+    public List<Database> getAllDatabases(JQGridParams params) {
+
+        StringBuffer qstr = new StringBuffer(128);
+
+        StringBuilder selectQuery =new StringBuilder(128);
+        selectQuery.append("select db from Database db ");
+
+        if(params.getSidx()!=null) {
+            qstr.append(" order by ");
+            qstr.append(params.getSidx());
+            qstr.append(" ");
+            qstr.append(params.getSord());
+        }
+        selectQuery.append(qstr);
+
+        javax.persistence.Query query = em.createQuery(selectQuery.toString());
+        query.setFirstResult(params.getStartIndex());
+        query.setMaxResults(params.getRows());
+
+        return query.getResultList();
     }
 
     public Database getDatabase(Long id) {
@@ -68,8 +87,27 @@ public class DatabaseService {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Schema> getSchemasByDatabaseId(Long databaseId) {
-        return em.createNamedQuery("Schema.findByDatabaseId").setParameter("databaseId", databaseId).getResultList();
+    public List<Schema> getSchemasByDatabaseId(Long databaseId, JQGridParams params) {
+
+        StringBuffer qstr = new StringBuffer(128);
+
+        StringBuilder selectQuery =new StringBuilder(128);
+        selectQuery.append("select s from Schema s where s.database.id = :databaseId ");
+
+        if(params.getSidx()!=null) {
+            qstr.append(" order by ");
+            qstr.append(params.getSidx());
+            qstr.append(" ");
+            qstr.append(params.getSord());
+        }
+        selectQuery.append(qstr);
+
+        javax.persistence.Query query = em.createQuery(selectQuery.toString());
+        query.setParameter("databaseId", databaseId);
+        query.setFirstResult(params.getStartIndex());
+        query.setMaxResults(params.getRows());
+
+        return query.getResultList();
     }
 
     public Schema getSchema(Long id) {
@@ -194,5 +232,4 @@ public class DatabaseService {
     public void deleteGroup(Group group) {
         em.createNamedQuery("Group.delete").setParameter("id", group.getId()).executeUpdate();
     }
-
 }
