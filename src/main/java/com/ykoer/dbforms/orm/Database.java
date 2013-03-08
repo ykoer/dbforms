@@ -3,6 +3,7 @@ package com.ykoer.dbforms.orm;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -23,7 +24,8 @@ import org.hibernate.validator.constraints.NotEmpty;
 @NamedQueries ({
     @NamedQuery(name="Database.findAll", query="select db from Database db order by db.env,db.name"),
     @NamedQuery(name="Database.find", query="select db from Database db where db.id = :id"),
-    @NamedQuery(name="Database.delete", query="delete from Database db where db.id = :id")
+    @NamedQuery(name="Database.delete", query="delete from Database db where db.id = :id"),
+    @NamedQuery(name="Database.countAll", query="select count(db) FROM Database db")
 })
 @XmlRootElement
 public class Database extends AbstractGrid {
@@ -36,22 +38,21 @@ public class Database extends AbstractGrid {
 
     @NotNull
     @NotEmpty
-    private String hostName;
-
-    @NotNull
-    private Long   port;
-
-    private String sid;
-
-    private String serviceName;
-
-    @NotNull
-    @NotEmpty
     private String env;
 
     @NotNull
     @NotEmpty
     private String name;
+
+    @NotNull
+    @NotEmpty
+    @Column(name="connection_url")
+    private String connectionURL;
+
+    @NotNull
+    @NotEmpty
+    @Column(name="driver_class")
+    private String driverClass;
 
     @OneToMany(mappedBy="database", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Schema> schemas;
@@ -66,38 +67,6 @@ public class Database extends AbstractGrid {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getHostName() {
-        return hostName;
-    }
-
-    public void setHostName(String hostName) {
-        this.hostName = hostName;
-    }
-
-    public Long getPort() {
-        return port;
-    }
-
-    public void setPort(Long port) {
-        this.port = port;
-    }
-
-    public String getSid() {
-        return sid;
-    }
-
-    public void setSid(String sid) {
-        this.sid = sid;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
     }
 
     public String getEnv() {
@@ -116,15 +85,27 @@ public class Database extends AbstractGrid {
         this.name = name;
     }
 
+    public String getConnectionURL() {
+        return connectionURL;
+    }
+
+    public void setConnectionURL(String connectionURL) {
+        this.connectionURL = connectionURL;
+    }
+
+    public String getDriverClass() {
+        return driverClass;
+    }
+
+    public void setDriverClass(String driverClass) {
+        this.driverClass = driverClass;
+    }
 
     public Set<Schema> getSchemas() {
         return schemas;
     }
 
-
     public void setSchemas(Set<Schema> schemas) {
         this.schemas = schemas;
-
-
     }
 }

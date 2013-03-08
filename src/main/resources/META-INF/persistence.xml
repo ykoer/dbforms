@@ -15,12 +15,13 @@
             <!-- Properties for Hibernate (default provider for JBoss AS) -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />
             <property name="hibernate.hbm2ddl.auto" value="update" /><!-- create-drop -->
-            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.show_sql" value="false" />
             <property name="hibernate.format_sql" value="false" />
 
-            <!-- Properties for EclipseLink (default provider for GlassFish) -->
+            <!-- Properties for EclipseLink (default provider for GlassFish) 
             <property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
             <property name="eclipselink.logging.level" value="FINE" />
+            -->
         </properties>
     </persistence-unit>
 </persistence>

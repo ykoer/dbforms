@@ -1,4 +1,4 @@
-package com.ykoer.dbforms.manager;
+package com.ykoer.dbforms.dao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import com.ykoer.dbforms.jqgrid.JQGridParams;
-import com.ykoer.dbforms.orm.Clause;
 import com.ykoer.dbforms.orm.Database;
 import com.ykoer.dbforms.orm.Group;
 import com.ykoer.dbforms.orm.Query;
@@ -18,7 +17,7 @@ import com.ykoer.dbforms.orm.Schema;
 
 @Stateless
 @LocalBean
-public class DatabaseService {
+public class DatabaseDAO {
 
     @PersistenceContext
     private EntityManager em;
@@ -29,6 +28,9 @@ public class DatabaseService {
      * DATABASE
      *
      ************************************************************************/
+    public long getDatabaseCount() {
+        return (Long)em.createNamedQuery("Database.countAll").getSingleResult();
+    }
 
     @SuppressWarnings("unchecked")
     public List<Database> getAllDatabases(JQGridParams params) {
@@ -70,6 +72,9 @@ public class DatabaseService {
      * Schema
      *
      ************************************************************************/
+    public long getSchemaCount(Long dbId) {
+        return (Long)em.createNamedQuery("Schema.countByDbId").setParameter("dbId", dbId).getSingleResult();
+    }
 
     @SuppressWarnings("unchecked")
     public List<Schema> getSchemasByQueryId(Long queryId) {
@@ -127,6 +132,33 @@ public class DatabaseService {
      * Query
      *
      ************************************************************************/
+    public long getQueryCount(long dbId, long schemaId) {
+        
+        ArrayList<Object> bindObj=new ArrayList<Object>();
+        StringBuffer selectQuery = new StringBuffer(128);
+        selectQuery.append("SELECT count(q) " +
+                           "FROM Query q LEFT JOIN q.schemas s " +
+                           "             LEFT JOIN s.database d " +
+                           "WHERE 1=1");
+
+        if (dbId != 0) {
+            selectQuery.append(" AND d.id=?").append(Integer.toString(bindObj.size()+1));
+            bindObj.add(dbId);
+        }
+        if (schemaId != 0) {
+            selectQuery.append(" AND s.id=?").append(Integer.toString(bindObj.size()+1));
+            bindObj.add(schemaId);
+        }
+        
+        javax.persistence.Query q = em.createQuery(selectQuery.toString());
+        int i=1;
+        for(Object obj:bindObj) {
+            System.out.println("obj: " + obj);
+            q.setParameter(i++,obj);
+        }
+        
+        return (Long)q.getSingleResult();
+    }
 
     @SuppressWarnings("unchecked")
     public List<Query> getAllQueries() {
@@ -134,35 +166,42 @@ public class DatabaseService {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Query> getQueries(Long dbId, Long schemaId) {
+    public List<Query> getQueries(Long dbId, Long schemaId, JQGridParams params) {
 
-        System.out.println("dbId: " + dbId);
-        System.out.println("schemaId: " + schemaId);
 
         ArrayList<Object> bindObj=new ArrayList<Object>();
-        StringBuffer qstr = new StringBuffer(128);
-        qstr.append("SELECT DISTINCT q " +
-                    "FROM Query q LEFT JOIN q.schemas s " +
-                    "             LEFT JOIN s.database d " +
-                    "WHERE 1=1");
+        StringBuffer selectQuery = new StringBuffer(128);
+        selectQuery.append("SELECT DISTINCT q " +
+                           "FROM Query q LEFT JOIN q.schemas s " +
+                           "             LEFT JOIN s.database d " +
+                           "WHERE 1=1");
 
         if (dbId != 0) {
-            qstr.append(" AND d.id=?").append(Integer.toString(bindObj.size()+1));
+            selectQuery.append(" AND d.id=?").append(Integer.toString(bindObj.size()+1));
             bindObj.add(dbId);
         }
         if (schemaId != 0) {
-            qstr.append(" AND s.id=?").append(Integer.toString(bindObj.size()+1));
+            selectQuery.append(" AND s.id=?").append(Integer.toString(bindObj.size()+1));
             bindObj.add(schemaId);
         }
-        javax.persistence.Query q = em.createQuery(qstr.toString());
+        
+        if(params.getSidx()!=null) {
+            selectQuery.append(" order by ");
+            selectQuery.append("q." + params.getSidx());
+            selectQuery.append(" ");
+            selectQuery.append(params.getSord());
+        }
 
-        System.out.println("size: " + bindObj.size());
+        javax.persistence.Query q = em.createQuery(selectQuery.toString());
+
 
         int i=1;
         for(Object obj:bindObj) {
             System.out.println("obj: " + obj);
             q.setParameter(i++,obj);
         }
+        q.setFirstResult(params.getStartIndex());
+        q.setMaxResults(params.getRows());
 
         return q.getResultList();
     }
@@ -189,29 +228,6 @@ public class DatabaseService {
     public void deleteQuery(Query query) {
         Query q = getQuery(query.getId());
         em.remove(q);
-    }
-
-    /************************************************************************
-     *
-     * Clause
-     *
-     ************************************************************************/
-
-    @SuppressWarnings("unchecked")
-    public List<Clause> getAllClauses(Long queryId) {
-        return em.createNamedQuery("Clause.findAll").setParameter("schemaId", queryId).getResultList();
-    }
-
-    public Clause getClause(Long id) {
-        return (Clause)em.createNamedQuery("Clause.find").setParameter("id", id).getSingleResult();
-    }
-
-    public void updateClause(Clause clause) {
-        em.merge(clause);
-    }
-
-    public void deleteClause(Clause clause) {
-        em.createNamedQuery("Clause.delete").setParameter("id", clause.getId()).executeUpdate();
     }
 
     /************************************************************************

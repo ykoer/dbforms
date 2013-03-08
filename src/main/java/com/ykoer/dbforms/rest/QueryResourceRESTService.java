@@ -10,13 +10,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.ykoer.dbforms.dao.QueryManager;
 import com.ykoer.dbforms.jqgrid.JQGridResponse;
+import com.ykoer.dbforms.model.FormField;
 
 
 
@@ -28,6 +34,9 @@ import com.ykoer.dbforms.jqgrid.JQGridResponse;
 @Path("/query")
 @RequestScoped
 public class QueryResourceRESTService {
+
+    @EJB
+    QueryManager manager;
 
 
     @POST
@@ -42,6 +51,10 @@ public class QueryResourceRESTService {
 
             Statement statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql);
+
+//            while (rs.next()) {
+//                System.out.println("-----------> " + rs.getString(4));
+//            }
 
             return createJQGridData(rs);
 
@@ -184,4 +197,27 @@ public class QueryResourceRESTService {
         }
     }
 
+    @POST
+    @Path("/execute/{schemaId}/{queryId}")
+    public JQGridResponse executeQuery(@PathParam("schemaId") long schemaId, 
+                                       @PathParam("queryId") long queryId,
+                                       @FormParam("field") List<String> queryValues) {
+
+
+        for (String s:queryValues) {
+            System.out.println("--->" + s);
+        }
+
+        return null;
+
+    }
+
+
+    @GET
+    @Path("/form/{queryId}")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    public List<FormField> getFormData(@PathParam("queryId") long queryId) {
+
+        return manager.getFormData(queryId);
+    }
 }

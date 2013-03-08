@@ -1,4 +1,4 @@
-package com.ykoer.dbforms.pojo;
+package com.ykoer.dbforms.model;
 
 import java.util.Map;
 

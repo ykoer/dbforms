@@ -31,7 +31,9 @@ import org.hibernate.validator.constraints.NotEmpty;
     @NamedQuery(name="Schema.findAll", query="select s from Schema s order by s.name"),
     @NamedQuery(name="Schema.findByDatabaseId", query="select s from Schema s where s.database.id = :databaseId order by s.name"),
     @NamedQuery(name="Schema.find", query="select s from Schema s where s.id = :id "),
-    @NamedQuery(name="Schema.delete", query="delete from Schema s where s.id = :id")
+    @NamedQuery(name="Schema.delete", query="delete from Schema s where s.id = :id"),
+    @NamedQuery(name="Schema.countAll", query="select count(s) FROM Schema s"),
+    @NamedQuery(name="Schema.countByDbId", query="select count(s) FROM Schema s where s.database.id = :dbId")
 })
 public class Schema extends AbstractGrid {
 

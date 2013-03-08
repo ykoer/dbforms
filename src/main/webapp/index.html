@@ -87,6 +87,17 @@
             return oo;
         }
 
+        var myCustomCheck = function (value, colname) {
+            if (colname === "SID") {
+                // depends on the edit type (inline or edit dialog)
+                otherFieldVal = ($('#serviceName').val() == undefined) ? $('#1_serviceName').val(): $('#serviceName').val();
+                if ((value === "" && otherFieldVal === "") || (value !== "" && otherFieldVal !== "")) {
+                    return [false, "Only one of SID or Service Name is required"];
+                }
+            }
+            return [true];
+        }
+
         $(function() {
 
             $("#tabs").tabs();
@@ -117,21 +128,20 @@
                 loadonce: false,
                 autowidth: true,
                 width: '100%',
-                colNames:['ID', 'Env', 'Hostname', 'Name', 'Port', 'Service Name', 'SID'],
+                height: '100%',
+                colNames:['ID', 'Env', 'Name', 'Connection URL', 'Driver Class'],
                 colModel:[
                            {name:'id',index:'id', width:40, sorttype:'int'},
-                           {name:'env',index:'env', editable:true, width:50},
-                           {name:'hostName',index:'hostName', editable:true, width:250},
-                           {name:'name',index:'name', editable:true, width:150},
-                           {name:'port',index:'port', editable:true, width:60},
-                           {name:'serviceName',index:'name', editable:true, width:100},
-                           {name:'sid',index:'sid', editable:true, width:100},
+                           {name:'env',index:'env', editable:true, width:50, editrules:{required:true}},
+                           {name:'name',index:'name', editable:true, width:130, editrules:{required:true}},
+                           {name:'connectionURL',index:'connectionURL', editable:true, width:400, editrules:{required:true}},
+                           {name:'driverClass',index:'driverClass', editable:true, width:200, editrules:{required:true}}
                 ],
                 jsonReader: {
                     repeatitems: false,
                     id: "id",
                 },
-                rowNum:30,
+                rowNum:10,
                 rowTotal: 2000,
                 rowList : [10,20,30],
                 mtype: "GET",
@@ -151,6 +161,10 @@
                 },
                 onSelectRow: function(rowid) {
                     loadSchemas(rowid);
+                },
+                ondblClickRow: function(){
+                    var row_id = dbgrid.getGridParam('selrow');
+                    dbgrid.editRow(row_id, true);
                 }
                 //onSortCol: saveSelection,
                 //loadComplete: restoreSelection --TODO FIX this
@@ -264,12 +278,13 @@
                 loadonce:false,
                 autowidth : true,
                 width: '100%',
-                colNames:['ID', 'Name', 'UI Group', 'SQL', ''],
+                colNames:['ID', 'Name', 'UI Group', 'SQL', 'Form Meta Info',''],
                 colModel:[
                            {name:'id',index:'id', width:30, sorttype:'int'},
                            {name:'name',index:'name', editable:true, width:200},
                            {name:'group.id',index:'group.id', editable:true, width:150, formatter:'select', edittype: 'select'},
                            {name:'sql',index:'sql', editable:true, width:450, edittype: 'textarea'},
+                           {name:'metaData',index:'metaData', editable:true, width:150, edittype: 'textarea'},
                            {name:'actions',index:'action', editable:false, sortable: false, width:20, formatter: function (cellvalue, options, rowObject) {
                                return "<span class='ui-icon ui-icon-circle-triangle-e' onclick=showAssignQueryDialog("+rowObject.id+");></span>";
                            }}
@@ -431,9 +446,23 @@
                     assignSchemaGrid.editRow(row_id, true);
                 }
             });
-             assignSchemaGrid.jqGrid('navGrid','#passignSchemaGrid',
+            assignSchemaGrid.jqGrid('navGrid','#passignSchemaGrid',
                 {edit:true,add:true,del:true}
-             );
+            );
+
+            $('#query1').submit(function() {
+                console.log($(this).serialize());
+
+                var data_form = $(this).serialize();
+
+			    $.ajax({
+                    type: "POST",
+                    url: "rest/query/execute/1/2",
+                    data: data_form,
+                });
+
+                return false;
+            });
         });
 
         function SortByName(x,y) {
@@ -611,6 +640,32 @@
                 <table id="list47"></table>
                 <div id="plist47"></div>
             </p>
+
+<hr>
+<form id="query1">
+   <div><input type="text" name="field" value="1" id="a" /></div>
+   <div><input type="text" name="field" value="2" id="b" /></div>
+   <div><input type="hidden" name="field" value="3" id="c" /></div>
+   <div>
+      <textarea name="field" rows="8" cols="40">4</textarea>
+   </div>
+   <div>
+      <select name="field">
+         <option value="5" selected="selected">5</option>
+         <option value="6">6</option>
+         <option value="7">7</option>
+      </select>
+   </div>
+   <div>
+      <input type="checkbox" name="field" value="8" id="f" />
+   </div>
+   <div>
+      <input type="submit" name="g" value="Submit" id="g" />
+   </div>
+</form>
+
+
+
         </div>
         <div id="tabs-2">
             <div>

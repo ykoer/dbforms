@@ -14,7 +14,6 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.PreRemove;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -32,7 +31,8 @@ import org.hibernate.validator.constraints.NotEmpty;
     //@NamedQuery(name="Query.findByDatabaseId", query="select q from Query q where :databaseId member of q.schemas.database"),
     //@NamedQuery(name="Query.findBySchemaId", query="select q from Query q where :schemaId member of q.schemas"),
     @NamedQuery(name="Query.find", query="select q from Query q where q.id = :id "),
-    @NamedQuery(name="Query.delete", query="delete from Query q where q.id = :id")
+    @NamedQuery(name="Query.delete", query="delete from Query q where q.id = :id"),
+    @NamedQuery(name="Query.countAll", query="select count(q) FROM Query q")
 })
 public class Query extends AbstractGrid {
 
@@ -55,12 +55,11 @@ public class Query extends AbstractGrid {
     @Column(name="sql_query")
     private String sql;
 
+    @Column(name="meta_data")
+    private String metaData;
+
     @ManyToMany(mappedBy = "queries", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Schema> schemas;
-
-    @OneToMany(mappedBy="query", fetch = FetchType.LAZY)
-    private Set<Clause> clauses;
-
 
 
     public Long getId() {
@@ -96,21 +95,21 @@ public class Query extends AbstractGrid {
     }
 
     @JsonIgnore
+    public String getMetaData() {
+        return metaData;
+    }
+
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
+    }
+
+    @JsonIgnore
     public Set<Schema> getSchemas() {
         return schemas;
     }
 
     public void setSchemas(Set<Schema> schemas) {
         this.schemas = schemas;
-    }
-
-    @JsonIgnore
-    public Set<Clause> getClauses() {
-        return this.clauses;
-    }
-
-    public void setClauses(Set<Clause> clauses) {
-        this.clauses=clauses;
     }
 
     @PreRemove
